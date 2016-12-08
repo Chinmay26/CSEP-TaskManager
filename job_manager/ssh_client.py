@@ -1,6 +1,6 @@
 import subprocess
 
-class ssh_client:
+class SSH_Client:
   '''
      Simple SSH Client to eexcute commands on remote machine
   '''

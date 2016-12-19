@@ -1,6 +1,4 @@
-from flaskext.mysql import MySQL
 from flask import g
-import cron_monitor
 
 class DB_Client:
   '''

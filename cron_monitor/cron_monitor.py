@@ -1,6 +1,4 @@
 from flask import Flask, g
-#from flaskext.mysql import MySQL
-
 from flask_mysqldb import MySQL
 from db_client import DB_Client
 from log_parser import LogParser
@@ -39,7 +37,7 @@ def init_db():
 def log_parser():
   db = get_db()
   end_time = datetime.now()
-  start_time = end_time - timedelta(days=10)
+  start_time = end_time - timedelta(days=1)
   lp = LogParser(start_time, end_time)
   result = lp.parse()
   return str(result)

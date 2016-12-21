@@ -1,4 +1,4 @@
-drop table if exists job_manager, jobs, job_history;
+drop table if exists job_manager, job_history, jobs;
 create table job_manager (
   id integer primary key auto_increment,
   version char(16) not null,
@@ -18,5 +18,6 @@ create table job_history (
   status char(64) not null, 
   start_time datetime not null, 
   end_time datetime not null, 
+  created_at datetime not null default current_timestamp,
   log_file_path varchar(700) unique not null,
   foreign key (job_id) references jobs(id));

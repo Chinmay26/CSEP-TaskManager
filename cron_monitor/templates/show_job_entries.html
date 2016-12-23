@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title> CSEP Task Manager </title>
+	<style>
+	table {
+		  font-family: arial, sans-serif;
+		  border-collapse: collapse;
+		  width: 100%;
+	}
+
+	td, th {
+		  border: 1px solid #dddddd;
+		  text-align: left;
+		  padding: 8px;
+	}
+
+	tr:nth-child(even) {
+		  background-color: #dddddd;
+	}
+	</style>
+</head>
+<body>
+  <table border="1">
+    <caption>Task History</caption>
+		  {% for job_name in job_entries['jobs'].keys() %}
+		    <tr>
+		      <td> {{ job_name|e }} </td>
+		      {% for day in job_entries['days']  %}				
+					  {% if day in job_entries['jobs'][job_name] %}
+               <td> {{ job_entries['jobs'][job_name][day]['status']|e }}</td>
+						{% else %}
+               <td> NOT FOUND  </td>
+            {% endif %}
+		      {% endfor %}
+				</tr>
+		    
+		  {% else %}
+				<li><em>job history is empty</em></li>
+		  {% endfor %}
+  </table>
+</body>
+</html>
+

@@ -12,12 +12,17 @@ class LogParser:
   ''' Base Class to parse cron log files
   '''
   def __init__(self, start_time, end_time):
+    #mapping between job name and job_details
     self.cron_job_meta = {}
+    #mapping between job id and job name
+    self.job_id_dict = {}
     self.db = DB_Client()
     results = self.db.execute_sql_command('select * from jobs')
     for job in results:
       self.cron_job_meta[job['job_name']] = job
+      self.job_id_dict[job['id']] = job['job_name']
     #print('job_meta', self.cron_job_meta)
+    #print('RESULTS', self.job_id_dict)
     self.start_time = start_time
     self.end_time = end_time
 
@@ -262,6 +267,7 @@ class LogParser:
       #print('log_files', log_files)
       logs = self.filter_logs_by_time_stamp(job_name, log_files, self.start_time, self.end_time)
       #print('logs', logs)
+
       #Get log files from DB
       db_files = self.get_db_entries({'id': job_details['id']}, self.start_time, self.end_time)
       #print('db_files', db_files)
@@ -275,13 +281,34 @@ class LogParser:
       self.parse_new_cron_output(remain_files)
 
     result = self.get_results_from_db(self.start_time, self.end_time)
-    return result
-    
+    response = self.build_response(result, self.start_time, self.end_time)
+    #print(type(result[0]),'\nRESPONSE', response)
+    return response
 
 
+  def build_response(self, result, start_time, end_time):
+    response = {'jobs': {}, 'days': []}
+    #Add all timestamps from start_time to end_time
+    start_date = start_time.date()
+    end_date = end_time.date()
+    temp_date = start_date
 
+    while temp_date != end_date:
+      response['days'].append(temp_date)
+      temp_date = temp_date + timedelta(days=1)
 
+    for job_name in self.cron_job_meta.keys():
+      response['jobs'][job_name] = {}
 
+    for db_entry in result:
+      job_id = db_entry['job_id']
+      job_name = self.job_id_dict[job_id]
 
+      result_date = db_entry['start_time'].date()
+      if result_date in response['jobs'][job_name]:
+        if db_entry['status'] == 'SUCCESS' and response['jobs'][job_name][result_date]['status'] == 'FAILURE':
+          response['jobs'][job_name][result_date] = db_entry
+      else:
+        response['jobs'][job_name][result_date] = db_entry
 
-
+    return response

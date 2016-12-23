@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title> CSEP Task Manager </title>
+	<style>
+	table {
+		font-family: arial, sans-serif;
+		border-collapse: collapse;
+		width: 100%;
+	}
+
+	td, th {
+    border: 1px solid #000000;
+		text-align: center;
+		padding: 15px;
+	}
+
+  .success {
+    background-color: #008000;
+    width: 10%;
+  }
+
+  .failure {
+    background-color: #ff0000;
+    width: 10%;
+  }
+
+  .notfound {
+    background-color: #dddddd; 
+    width: 10%;
+  }
+
+  .legend { list-style: none; }
+  .legend li { float: left; margin-right: 20px; }
+  .legend span { border: 1px solid #ccc; float: left; width: 15px; height: 15px; margin: 2px; }
+
+	</style>
+</head>
+<body>
+  <h2 style="text-align: center;"> CRON TASK HISTORY </h2>
+  <table border="1">
+      <tr>
+          <td> Jobs / Date </td>
+            {% for day in job_entries['days'] %}
+          <td > {{ day|e }} </td>
+        {% endfor %}
+      </tr>
+		  {% for job_name in job_entries['jobs'].keys() %}
+		    <tr>
+		      <td> {{ job_name|e }} </td>
+		      {% for day in job_entries['days']  %}
+					  {% if day in job_entries['jobs'][job_name] %}
+               {% if job_entries['jobs'][job_name][day]['status'] == 'SUCCESS' %}
+                 <td class="success">  </td>
+               {% else %}
+                 <td class="failure">  </td>
+               {% endif %}
+						{% else %}
+               <td class="notfound">  </td>
+            {% endif %}
+		      {% endfor %}
+				</tr>
+		    
+		  {% else %}
+				<li><em>job history is empty</em></li>
+		  {% endfor %}
+  </table>
+  <ul class="legend">
+    <li><span class="success"></span> Success</li>
+    <li><span class="failure"></span> Failure</li>
+    <li><span class="notfound"></span> Not Found</li>
+  </ul>
+
+</body>
+</html>
+

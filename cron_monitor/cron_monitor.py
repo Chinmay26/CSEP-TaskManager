@@ -1,12 +1,12 @@
-from flask import Flask, g
+#from flask import Flask, g,render_template
+from flask import Flask, request, g, render_template
 from flask_mysqldb import MySQL
-from db_client import DB_Client
 from log_parser import LogParser
 from datetime import datetime,timedelta
 import config
 import csv
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder='./templates')
 
 app.config['MYSQL_USER'] = config.MYSQL_DATABASE_USER
 app.config['MYSQL_PASSWORD'] = config.MYSQL_DATABASE_PASSWORD
@@ -54,11 +54,12 @@ def initdb_command():
 def log_parser():
   db = get_db()
   end_time = datetime.now()
-  start_time = end_time - timedelta(days=1)
+  start_time = end_time - timedelta(days=7)
   lp = LogParser(start_time, end_time)
   result = lp.parse()
-  return str(result)
+  
 
+  return render_template('show_job_entries.html', job_entries=result)
 
 
 if __name__ == "__main__":

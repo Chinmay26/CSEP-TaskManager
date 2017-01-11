@@ -6,7 +6,12 @@ from datetime import datetime,timedelta
 import config
 import csv
 
-app = Flask(__name__, template_folder='./templates')
+#Fix later - on system hosting server - add appropriate repo path
+#!/usr/bin/python3
+import sys
+sys.path.insert(0,config.REPO_PATH)
+
+app = Flask(__name__, template_folder=config.TEMPLATES_PATH)
 
 app.config['MYSQL_USER'] = config.MYSQL_DATABASE_USER
 app.config['MYSQL_PASSWORD'] = config.MYSQL_DATABASE_PASSWORD
@@ -57,8 +62,6 @@ def log_parser():
   start_time = end_time - timedelta(days=7)
   lp = LogParser(start_time, end_time)
   result = lp.parse()
-  
-
   return render_template('show_job_entries.html', job_entries=result)
 
 

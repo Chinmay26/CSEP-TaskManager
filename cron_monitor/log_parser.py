@@ -165,13 +165,19 @@ class LogParser:
     proc = self.execute_command(command)
     return proc
 
-  def create_job_history_db_entries(self, log_details):
-    command = 'insert ignore into job_history(job_id,status,start_time,end_time,log_file_path) values(%s,%s,%s,%s,%s)'
+  def create_job_history_db_entries(self, log_entries):
+    command = 'insert ignore into job_history(job_id,status,start_time,end_time,log_file_path)'
+    command += 'values({job_id},{status},{start_time},{end_time},{log_file_path})'.format(job_id=log_entries[0]['job_id'], 
+                status=log_entries[0]['status'], start_time=log_entries[0]['start_time'], end_time=log_entries[0]['end_time'],
+                log_file_path=log_entries[0]['file_path'])
 
-    query_t = (log_details['job_id'],log_details['status'],log_details['start_time'],log_details['end_time'], 
-               log_details['file_path'])
+    for entry in log_entries[1:]:
+      command += ',({job_id},{status},{start_time},{end_time},{log_file_path})'.format(job_id=entry['job_id'], 
+                status=entry['status'], start_time=entry['start_time'], end_time=entry['end_time'],
+                log_file_path=entry['file_path'])
+
     #print('DB CMD', command, query_t)
-    results = self.db.execute_sql_command(command, query_t)
+    results = self.db.execute_sql_command(command)
     return results
 
   def get_job_name_from_log_file(self, log):
@@ -192,8 +198,9 @@ class LogParser:
     st = t1 + ' ' + formatted_seconds_timestamp
     return st
 
-  def create_success_entries(self, log_files):
+  def build_log_entries(self, log_files, status):
     proc = self.get_file_metadata(log_files)
+    log_entries = []
     for line in io.TextIOWrapper(proc.stdout, encoding="utf-8"):
       line = line.strip()
       file_data = line.split(' ')
@@ -207,30 +214,11 @@ class LogParser:
       if log_details['start_time'] is None:
         continue
       log_details['end_time'] = file_data[-4] + ' ' + file_data[-3]
-        
-      log_details['job_id'] = self.cron_job_meta[job_name]['id']
-      log_details['status'] = 'SUCCESS'
-      self.create_job_history_db_entries(log_details)
 
-  def create_failures_entries(self, log_files):
-    proc = self.get_file_metadata(log_files)
-    for line in io.TextIOWrapper(proc.stdout, encoding="utf-8"):
-      line = line.strip()
-      file_data = line.split(' ')
-      log_details = {}
-      log_details['file_path'] = file_data[-1]
-      file_name = log_details['file_path'].split('/')[-1]
-      job_name = self.get_job_name_from_log_file(file_name)
-      if job_name is None:
-        continue
-      log_details['start_time'] = self.extract_time_from_file_name(file_name)
-      if log_details['start_time'] is None:
-        continue
-      log_details['end_time'] = file_data[-4] + ' ' + file_data[-3]
-        
       log_details['job_id'] = self.cron_job_meta[job_name]['id']
-      log_details['status'] = 'FAILURE'
-      self.create_job_history_db_entries(log_details)
+      log_details['status'] = status
+      log_entries.append(log_details)
+    return log_entries
     
 
   def parse_new_cron_output(self, new_files):
@@ -243,8 +231,12 @@ class LogParser:
       success_cron_logs.append(line.strip())
 
     failure_cron_logs = set(new_files) - set(success_cron_logs)
-    self.create_success_entries(success_cron_logs)
-    self.create_failures_entries(list(failure_cron_logs))
+    log_entries = []
+    success_entries = self.build_log_entries(success_cron_logs, 'SUCCESS')
+    failure_entries = self.build_log_entries(list(failure_cron_logs), 'FAILURE')
+    log_entries.extend(success_entries)
+    log_entries.extend(failure_entries)
+    self.create_job_history_db_entries(log_entries)
 
 
   def get_results_from_db(self, start_time, end_time):
@@ -283,10 +275,11 @@ class LogParser:
       #print('remain', remain_files)
       self.parse_new_cron_output(remain_files)
 
-    result = self.get_results_from_db(self.start_time, self.end_time)
+    
     #change start time to start of day
     st = self.start_time.replace(hour=0, minute=0, second=0, microsecond=0)
-    response = self.build_response(result, st, self.end_time)
+    result = self.get_results_from_db(st, self.end_time)
+    response = self.build_response(result, self.start_time, self.end_time)
     #print(type(result[0]),'\nRESPONSE', response)
     return response
 

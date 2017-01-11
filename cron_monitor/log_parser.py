@@ -84,8 +84,9 @@ class LogParser:
       month_directory.append(temp_date)
 
     for m in month_directory:
-      parent_dir += (FILE_SEPARATOR + str(m.year) + MONTH_LOG_SEPARATOR + str(m.month))
-      file_meta_path = parent_dir + FILE_SEPARATOR + job_metadata['file_base_name'] + str(m.year) + \
+      cur_dir = parent_dir
+      cur_dir += (FILE_SEPARATOR + str(m.year) + MONTH_LOG_SEPARATOR + str(m.month))
+      file_meta_path = cur_dir + FILE_SEPARATOR + job_metadata['file_base_name'] + str(m.year) + \
                        LOG_FILE_DATE_SEPARATOR + str(m.month) + LOG_FILE_DATE_SEPARATOR
       month = str(m.year) + LOG_FILE_DATE_SEPARATOR + str(m.month)
       file_dict[month] = file_meta_path
@@ -99,7 +100,7 @@ class LogParser:
     '''
     #command = 'ls -p file1,file*'
     command = "ls -p " + ' '.join(map(str, dir_list))
-    command += "*"
+    #command += "*"
 
     proc = self.execute_command(command)
     log_files = []
@@ -126,6 +127,8 @@ class LogParser:
     '''
     lp = self.get_log_paths(job_name, start_time, end_time)
     lpv = list(lp.values())
+    #Add meta-character to input list
+    lpv = [ i+'*' for i in lpv ]
     #print('meta_month_list', lpv)
     #TO-DO Filter files from start date to end date
     log_files = self.get_log_files(lpv)
@@ -163,7 +166,7 @@ class LogParser:
     return proc
 
   def create_job_history_db_entries(self, log_details):
-    command = 'insert into job_history(job_id,status,start_time,end_time,log_file_path) values(%s,%s,%s,%s,%s)'
+    command = 'insert ignore into job_history(job_id,status,start_time,end_time,log_file_path) values(%s,%s,%s,%s,%s)'
 
     query_t = (log_details['job_id'],log_details['status'],log_details['start_time'],log_details['end_time'], 
                log_details['file_path'])
@@ -281,7 +284,9 @@ class LogParser:
       self.parse_new_cron_output(remain_files)
 
     result = self.get_results_from_db(self.start_time, self.end_time)
-    response = self.build_response(result, self.start_time, self.end_time)
+    #change start time to start of day
+    st = self.start_time.replace(hour=0, minute=0, second=0, microsecond=0)
+    response = self.build_response(result, st, self.end_time)
     #print(type(result[0]),'\nRESPONSE', response)
     return response
 

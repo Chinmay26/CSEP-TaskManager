@@ -167,16 +167,16 @@ class LogParser:
 
   def create_job_history_db_entries(self, log_entries):
     command = 'insert ignore into job_history(job_id,status,start_time,end_time,log_file_path)'
-    command += 'values({job_id},{status},{start_time},{end_time},{log_file_path})'.format(job_id=log_entries[0]['job_id'], 
+    command += 'values("{job_id}","{status}","{start_time}","{end_time}","{log_file_path}"")'.format(job_id=log_entries[0]['job_id'], 
                 status=log_entries[0]['status'], start_time=log_entries[0]['start_time'], end_time=log_entries[0]['end_time'],
                 log_file_path=log_entries[0]['file_path'])
 
     for entry in log_entries[1:]:
-      command += ',({job_id},{status},{start_time},{end_time},{log_file_path})'.format(job_id=entry['job_id'], 
+      command += ',("{job_id}","{status}","{start_time}","{end_time}","{log_file_path}")'.format(job_id=entry['job_id'], 
                 status=entry['status'], start_time=entry['start_time'], end_time=entry['end_time'],
                 log_file_path=entry['file_path'])
 
-    #print('DB CMD', command, query_t)
+    print('Creating Database entries\n', command)
     results = self.db.execute_sql_command(command)
     return results
 
@@ -261,13 +261,13 @@ class LogParser:
       log_files = self.get_cron_log_files_for_job(job_name, self.start_time, self.end_time)
       #print('log_files', log_files)
       logs = self.filter_logs_by_time_stamp(job_name, log_files, self.start_time, self.end_time)
-      #print('logs', logs)
+      print('Current log files :\n', logs)
 
       #Get log files from DB
       db_files = self.get_db_entries({'id': job_details['id']}, self.start_time, self.end_time)
-      #print('db_files', db_files)
+      print('Log entries in DB :\n', db_files)
       diff = set(logs) - set(db_files)
-      #print('diff', diff)
+      print('Log file entries to be created : \n', diff)
       remain_files.extend(list(diff))
 
     if len(remain_files) > 0:

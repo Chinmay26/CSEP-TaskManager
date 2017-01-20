@@ -183,7 +183,15 @@ class LogParser:
   def get_job_name_from_log_file(self, log):
     for job_name,job_details in self.cron_job_meta.items():
       if job_details['file_base_name'] in log:
-        return job_name
+        if job_details['file_base_name'] == 'global_one_year_':
+          if 'global_one_year_V12.1_' in log:
+            return 'Dispatcher_Global_One_Year_V12.1'
+          elif 'global_one_year_V14.1_' in log:
+            return 'Dispatcher_Global_One_Year_V14.1'
+          else:
+            return job_name
+        else:
+          return job_name
     return None
 
   #FIX-THIS

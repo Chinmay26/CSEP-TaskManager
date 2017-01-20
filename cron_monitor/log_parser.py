@@ -167,7 +167,7 @@ class LogParser:
 
   def create_job_history_db_entries(self, log_entries):
     command = 'insert ignore into job_history(job_id,status,start_time,end_time,log_file_path)'
-    command += 'values("{job_id}","{status}","{start_time}","{end_time}","{log_file_path}"")'.format(job_id=log_entries[0]['job_id'], 
+    command += 'values("{job_id}","{status}","{start_time}","{end_time}","{log_file_path}")'.format(job_id=log_entries[0]['job_id'], 
                 status=log_entries[0]['status'], start_time=log_entries[0]['start_time'], end_time=log_entries[0]['end_time'],
                 log_file_path=log_entries[0]['file_path'])
 
